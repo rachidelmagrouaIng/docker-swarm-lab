@@ -1,35 +1,65 @@
-# Evidence from the original presentation
+# Lab validation
 
-Source: Rachid EL MAGROUA, “Docker Swarm — Orchestration des conteneurs”, supplied 37-slide presentation. The screenshots below were extracted unchanged. They are historical observations, not outputs from the new stack configuration.
+I built a three-node Docker Swarm cluster to explore service replication, task placement, and recovery after container removal. This page records the results of those exercises.
 
-## Three-node cluster
+## Cluster configuration
 
-![Original node list](images/cluster-nodes.png)
+I configured one manager and two workers, then checked cluster membership with `docker node ls`.
 
-Three nodes are Ready and Active, with one Leader. The screenshot reports Docker Engine 19.03.6, a historical version, not an installation recommendation.
+![Three Ready and Active Swarm nodes](images/cluster-nodes.png)
 
-## Replicated HTTP service
+All three nodes appear as **Ready** and **Active**, with the manager elected **Leader**. The manager also participates in running application tasks.
 
-![Original service replica count](images/service-replicas.png)
+## HTTP service deployment
 
-`myservice` shows 3/3 replicas with `httpd:latest`, published on port 80. The new stack uses `swarm-lab_web`, `httpd:2.4-alpine`, and published port 8080. It adds explicit deployment settings.
+I deployed an Apache HTTP service named `myservice` with three replicas and checked its state with `docker service ls`.
 
-## Task placement
+![HTTP service with three running replicas](images/service-replicas.png)
 
-![Original task placement](images/task-placement.png)
+The service reached **3/3 running replicas**, using `httpd:latest` and publishing port **80**.
 
-The three running tasks are placed on three different hosts. This is an observed placement, not a permanent guarantee that each node has exactly one replica.
+## Task distribution
 
-## Container replacement
+I used `docker service ps myservice` to inspect where the service tasks were running.
 
-![Original container removal and replacement](images/container-recovery.png)
+![Service tasks distributed across three hosts](images/task-placement.png)
 
-The terminal sequence shows a running container, its forced removal, an empty subsequent container list, and a new running container for the service. It supports task replacement after removal. It does not establish recovery latency, zero downtime, or manager failover.
+At the time of inspection, each node hosted one task. This confirmed that the service was running across the cluster. Task placement can change as node availability and resource capacity change.
 
-## Publication choices
+## Recovery after container removal
 
-The full presentation is excluded because other screenshots contain join tokens, and decorative assets have no documented reuse license. The selected terminal screenshots contain no visible join tokens. Their private lab host addresses and node identifiers remain as historical context. No license for third-party presentation artwork is asserted.
+I removed one running service container with `docker rm -f`, then inspected the containers on the node.
 
-## Evidence still needed
+![Container removal followed by a replacement container](images/container-recovery.png)
 
-The new deployment, manual scaling, drain/reactivation, rolling updates and rollback need new execution evidence. Use [the results template](results-template.md) and keep expected behavior separate from observed results.
+A new container appeared with a different ID for the same service task slot. This demonstrates Swarm restoring the configured replica count after a container is removed.
+
+The exercise verifies container replacement. Recovery time and HTTP request failures were not measured.
+
+## Results summary
+
+| Check | Observed result |
+| --- | --- |
+| Cluster membership | One manager and two workers, all Ready and Active |
+| Service replication | Three running replicas |
+| Task distribution | One task on each of the three nodes at inspection |
+| Container replacement | A new service container appeared after removal |
+
+## Configuration notes
+
+The captured run uses Docker Engine 19.03.6. The repository's deployment configuration differs from that run:
+
+| Setting | Captured lab run | Repository stack |
+| --- | --- | --- |
+| Service name | `myservice` | `swarm-lab_web` |
+| Image | `httpd:latest` | `httpd:2.4-alpine` |
+| Published port | 80 | 8080 |
+| Replicas | 3 | 3 |
+
+Validation of the repository stack is tracked separately in the [test record](results-template.md).
+
+## Further validation
+
+My next tests cover manual scaling, worker maintenance, rolling updates, and rollback. I also plan to measure recovery time and request failures during an interruption.
+
+The cluster has one manager, so manager fault tolerance is outside the scope of this configuration.
