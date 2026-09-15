@@ -1,22 +1,59 @@
-# New lab run results
+# Test plan and results record
 
-Status: **Not executed**. Replace placeholders only with measured observations.
+I use this record to track repeatable checks of the repository's Docker Swarm deployment. Completed cluster and container-recovery observations are documented in [Lab validation](evidence.md).
 
-- Date:
-- Git commit:
-- OS and Docker version on each node:
-- Node resources and topology:
-- Resolved image digest:
-- Network restrictions:
+## Completed lab checks
 
-| Exercise | Expected observation | Actual observation | Evidence |
-| --- | --- | --- | --- |
-| Deployment | Three running replicas | Pending | Pending |
-| HTTP access | Successful response via each node | Pending | Pending |
-| Scale to five | Five running replicas | Pending | Pending |
-| Container removal | Replacement task reaches Running | Pending | Pending |
-| Worker drain | Tasks move to eligible nodes | Pending | Pending |
-| Image update | Tasks adopt selected image | Pending | Pending |
-| Rollback | Previous specification restored | Pending | Pending |
+| Check | Result | Supporting record |
+| --- | --- | --- |
+| Cluster membership | Three nodes Ready and Active, including one manager | [Node list](images/cluster-nodes.png) |
+| HTTP service replication | Service reached 3/3 running replicas | [Service state](images/service-replicas.png) |
+| Task placement | Tasks distributed across three hosts | [Task list](images/task-placement.png) |
+| Container replacement | Replacement container appeared after forced removal | [Recovery sequence](images/container-recovery.png) |
 
-For recovery testing, record failure time, recovery criterion, elapsed time, request interval, failed requests, and clock synchronization. Exclude credentials, join tokens and sensitive addresses from new captures.
+These checks apply to the captured lab configuration. The repository stack has a separate validation run planned.
+
+## Repository stack validation
+
+**Run status: Planned**
+
+| Environment detail | Value |
+| --- | --- |
+| Test date | To record |
+| Git commit | To record |
+| Host OS and Docker Engine versions | To record |
+| Node roles, CPU, and memory | To record |
+| Image digest | To record |
+| Network and firewall configuration | To record |
+
+## Test cases
+
+| ID | Test | Acceptance criterion | Status | Observation / evidence |
+| --- | --- | --- | --- | --- |
+| T01 | Deploy `stack.yml` | `swarm-lab_web` reaches 3/3 running replicas | Planned | — |
+| T02 | Access HTTP through each node | Each node returns a successful HTTP response on port 8080 | Planned | — |
+| T03 | Scale from three to five replicas | Service reaches 5/5, then returns to 3/3 after scaling back | Planned | — |
+| T04 | Remove one service container | A replacement task reaches Running and the service returns to 3/3 | Planned | — |
+| T05 | Drain a worker | Service tasks move to eligible active nodes | Planned | — |
+| T06 | Reactivate the worker | Worker returns to Active and is eligible for scheduling | Planned | — |
+| T07 | Update the image | All running tasks use the selected image digest | Planned | — |
+| T08 | Roll back the update | Service returns to the previous specification | Planned | — |
+
+## Recovery measurements
+
+For T04, record:
+
+| Measurement | Value |
+| --- | --- |
+| Container removal timestamp | To measure |
+| Replacement task Running timestamp | To measure |
+| Time to restore three running replicas | To measure |
+| HTTP probe interval and timeout | To record |
+| Total probes and failed requests | To measure |
+| Clock synchronization method | To record |
+
+Task recovery and client-facing availability are separate observations. A replacement container reaching Running does not by itself confirm uninterrupted HTTP service.
+
+## Run notes
+
+Record unexpected behavior, relevant service logs, and corrective actions here. Attach terminal output or screenshots for each completed test, with credentials and join tokens removed.
