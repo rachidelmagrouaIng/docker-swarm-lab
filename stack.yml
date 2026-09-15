@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  web:
+    image: httpd:2.4-alpine
+    ports:
+      - target: 80
+        published: 8080
+        protocol: tcp
+        mode: ingress
+    networks:
+      - web
+    deploy:
+      replicas: 3
+      placement:
+        preferences:
+          - spread: node.id
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+        reservations:
+          cpus: "0.10"
+          memory: 32M
+      restart_policy:
+        condition: any
+        delay: 5s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+        monitor: 15s
+      rollback_config:
+        parallelism: 1
+        order: stop-first
+
+networks:
+  web:
+    driver: overlay

@@ -1,0 +1,15 @@
+name: Validate lab files
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate stack and Python example
+        run: bash scripts/validate.sh
+      - name: Build and run hello example
+        run: |
+          docker build -t swarm-hello:test examples/hello-python
+          test "$(docker run --rm swarm-hello:test)" = 'Hello, IRSI!'
